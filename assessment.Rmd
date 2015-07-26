@@ -1,22 +1,112 @@
 ---
-title: "assessment"
+title: "Assessment: Predicting Weight Lifting Excercises"
 author: "Make42"
-date: "21. Juli 2015"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r}
-summary(cars)
+```{r, echo=FALSE, message=FALSE, warning=F}
+source("script.R")
 ```
 
-You can also embed plots, for example:
+# Abstract / Executive Summary
 
-```{r, echo=FALSE}
-plot(cars)
+The goal of this work is to do a prediction on a weightlifting dataset.
+
+Different kind of sensors have been put on arm, glove, and waist during a lifting excercise in which six young men lifted a dumbell. They did the excercise in six different ways, of which only one (type "A") is corrrect. The taks of is to predict in which way ("A" to "F") the excersise was performed. For this a decision tree was used.
+
+For more information see the paper "Qualitative Activity Recognition of Weight Lifting Exercises" from Velloso et al. at http://perceptual.mpi-inf.mpg.de/files/2013/03/velloso13_ah.pdf
+
+# Cross-Validation
+
+In order to valididate the results later on, we devide the set into a training and a testing dataset. I used the function `createDataPartition()` on the variable `classe` with 75% of the data in the training set.
+
+Therefore we have three datasets: The labeled training dataset, the labeled testing dataset (of which both come from the orginal provided training data, which has 19622 observations in total) and the unlabeled testing dataset which is our new data we want to predict, which has only 20 observations in total.
+
+# Feature Selection
+
+After examining the data it became quickly obvious that a feature selection was necessary.
+
+## Get rid of NA and irrelevant Features
+
+In the dataset there were a lot of values that were completely not available in the unlabeled new data of 20 observations. Therefore those variables could not be used in the prediction and where discarded. The reason is that those variables are derived features derived from examining sliding windows. However the unlabeled test data do not have any kind of window variables - the prediction has to take place on a single observation.
+
+Also discarded where irrelevant feature, as for example IDs or timestamps.
+
+## Near Zero Variance
+
+During the feature selection I took a closer look at Near Zero Variance with the function `nearZeroVar()`. The following plot shows "frequency ratio" and "percent of unique values" for each feature.
+
+```{r, echo=FALSE, message=F, warning=F}
+gg_nzv
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Correlation
+
+Also considered was the correlation of the features.
+The following plot shows a histogram of the correlation values.
+For the plot, the absolutes of the values in the upper triangle of the correlation matrix where used.
+
+```{r, echo=FALSE, message=F, warning=F}
+gg_cor
+```
+
+## Feature analysis and selection
+
+The diagnostics frequency ratio, percent of unique values and the correlation where used in order to assess the features:
+
+```{r, echo=FALSE, message=F, warning=F}
+gg_feats
+```
+
+From this the features with frequency ratio smaller 7, percent of unique values greater 1 and correlation smaller than 0.6 where choosen.
+
+Those relevant feature are
+
+```{r, echo=F, message=F, warning=F}
+relFeats2
+```
+
+# Training
+
+For the training a decision tree was used, which was trained on the labeled training data.
+The decision tree is
+
+```{r, echo=FALSE, message=F, warning=F}
+fancyRpartPlot(fitModel$finalModel, main="", sub="")
+```
+
+# Results
+
+The results are shown in the following confidence matrices.
+
+For the labeled training data:
+
+```{r, echo=FALSE, message=F, warning=F}
+confMatr_train
+```
+
+For the labeled testing data:
+
+```{r, echo=FALSE, message=F, warning=F}
+confMatr_test
+gg_conf2_gf
+```
+
+Unfortunately, the results are not very impressive.
+
+# Prediction of new data
+
+The prediction for the 20 unlabeled new observations are
+
+```{r, echo=FALSE, message=F, warning=F}
+finalpredict
+```
+
+# Conclusion
+
+It is easy to see that the results are not very impressive.
+I guess the reason lies in the choice of the features.
+Maybe other methods of finding the right features should be used or derived features build.
+I am looking forward to suggestions on this part.
+
+
